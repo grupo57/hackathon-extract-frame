@@ -31,7 +31,6 @@ import java.util.zip.ZipOutputStream;
 
 public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(VideoFrameExtractorLambda.class);
-    private static final String QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/744592382994/hackathon-video-processado";
 
     private final S3Client s3Client = S3Client.create();
     private final SqsClient sqsClient = SqsClient.builder().build();
@@ -167,7 +166,7 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
     // Envia uma mensagem para a SQS
     private void sendMessageToSQS(String messageBody) {
         SendMessageRequest sendMsgRequest = SendMessageRequest.builder()
-                .queueUrl(QUEUE_URL)
+                .queueUrl(Parametros.getQueueUrl())
                 .messageBody(messageBody)
                 .build();
 
@@ -178,5 +177,12 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
             throw new RuntimeException("Erro ao enviar mensagem para a fila SQS", e);
         }
     }
+
+
+    // NOTIFICAR VIA SES
+    private void sendEmail() {
+
+    }
+
 
 }
