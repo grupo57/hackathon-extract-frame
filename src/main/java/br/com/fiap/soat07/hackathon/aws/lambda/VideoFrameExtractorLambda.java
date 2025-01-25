@@ -76,14 +76,16 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
                 // Limpeza temporária
                 cleanUp(tempFilePath, imagePaths, zipFilePath);
 
-                // Após o processamento, envia a mLocalDateTime.now(ZoneId.of("UTC"))ensagem para a SQS
+                // Após o processamento, envia a mensagem para a SQS
                 LocalDateTime termino = LocalDateTime.now(ZoneId.of("UTC"));
                 enviarMensagemDeSucessoParaSQS(objectKey+";"+inicio+";"+termino);
 
                 return "Processamento concluído com sucesso!";
             } catch (Exception e) {
-                enviarMensagemDeErroParaSQS(objectKey+";"+e.getMessage());
-                System.err.println("Erro ao baixar o processar o arquivo: " + e.getMessage());
+                // Se ocorreu algum erro no processamento, envia a mensagem para a SQS
+                LocalDateTime termino = LocalDateTime.now(ZoneId.of("UTC"));
+                enviarMensagemDeErroParaSQS(objectKey+";"+inicio+";"+termino+";"+e.getMessage());
+                System.err.println("Erro ao processar o arquivo: " + e.getMessage());
             }
         }
 
@@ -113,6 +115,9 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
         } else {
             throw new IOException("Erro ao executar FFmpeg. Código de saída: " + exitCode);
         }
+
+        if (imagePaths.isEmpty())
+            throw new IllegalArgumentException("Não foi possível extrair os frames, verifique o tipo do arquivo");
 
         return imagePaths;
     }
@@ -182,7 +187,7 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
     // Envia uma mensagem para a SQS
     private void enviarMensagemDeErroParaSQS(String messageBody) {
         SendMessageRequest sendMsgRequest = SendMessageRequest.builder()
-                .queueUrl(Parametros.getQueueSucessoUrl())
+                .queueUrl(Parametros.getQueueErroUrl())
                 .messageBody(messageBody)
                 .build();
 
