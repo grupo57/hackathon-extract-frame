@@ -78,10 +78,11 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
 
                 // Após o processamento, envia a mLocalDateTime.now(ZoneId.of("UTC"))ensagem para a SQS
                 LocalDateTime termino = LocalDateTime.now(ZoneId.of("UTC"));
-                sendMessageToSQS(objectKey+";"+inicio+";"+termino);
+                enviarMensagemDeSucessoParaSQS(objectKey+";"+inicio+";"+termino);
 
                 return "Processamento concluído com sucesso!";
             } catch (Exception e) {
+                enviarMensagemDeErroParaSQS(objectKey+";"+e.getMessage());
                 System.err.println("Erro ao baixar o processar o arquivo: " + e.getMessage());
             }
         }
@@ -164,9 +165,9 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
     }
 
     // Envia uma mensagem para a SQS
-    private void sendMessageToSQS(String messageBody) {
+    private void enviarMensagemDeSucessoParaSQS(String messageBody) {
         SendMessageRequest sendMsgRequest = SendMessageRequest.builder()
-                .queueUrl(Parametros.getQueueUrl())
+                .queueUrl(Parametros.getQueueSucessoUrl())
                 .messageBody(messageBody)
                 .build();
 
@@ -178,11 +179,19 @@ public class VideoFrameExtractorLambda implements RequestHandler<S3Event, String
         }
     }
 
+    // Envia uma mensagem para a SQS
+    private void enviarMensagemDeErroParaSQS(String messageBody) {
+        SendMessageRequest sendMsgRequest = SendMessageRequest.builder()
+                .queueUrl(Parametros.getQueueSucessoUrl())
+                .messageBody(messageBody)
+                .build();
 
-    // NOTIFICAR VIA SES
-    private void sendEmail() {
-
+        try {
+            SendMessageResponse sendMessageResponse = sqsClient.sendMessage(sendMsgRequest);
+            System.out.println("Mensagem enviada com ID: " + sendMessageResponse.messageId());
+        } catch (SqsException e) {
+            throw new RuntimeException("Erro ao enviar mensagem para a fila SQS", e);
+        }
     }
-
 
 }
