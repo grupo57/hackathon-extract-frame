@@ -1,7 +1,8 @@
 # Lambda Layer para FFmpeg
 resource "aws_lambda_layer_version" "ffmpeg_layer" {
-  s3_bucket = var.s3_bucket_name
-  s3_key    = var.layer_ffmpeg_s3_key
+  layer_name          = "ffmpeg-layer"
+  s3_bucket           = var.s3_bucket_name
+  s3_key              = var.layer_ffmpeg_s3_key
   compatible_runtimes = ["java11", "java17"]
 }
 
@@ -65,39 +66,39 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
 
 # API Gateway
-resource "aws_apigatewayv2_api" "http_api" {
-  name          = var.api_gateway_name
-  protocol_type = "HTTP"
-}
+# resource "aws_apigatewayv2_api" "http_api" {
+#   name          = var.api_gateway_name
+#   protocol_type = "HTTP"
+# }
 
-# Integração Lambda com API Gateway
-resource "aws_apigatewayv2_integration" "lambda_integration" {
-  api_id             = aws_apigatewayv2_api.http_api.id
-  integration_type   = "AWS_PROXY"
-  integration_uri    = aws_lambda_function.api_lambda.invoke_arn
-  payload_format_version = "2.0"
-}
+# # Integração Lambda com API Gateway
+# resource "aws_apigatewayv2_integration" "lambda_integration" {
+#   api_id             = aws_apigatewayv2_api.http_api.id
+#   integration_type   = "AWS_PROXY"
+#   integration_uri    = aws_lambda_function.java_api_lambda.invoke_arn
+#   payload_format_version = "2.0"
+# }
 
-# Rota para a API
-resource "aws_apigatewayv2_route" "default_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /{proxy+}"
+# # Rota para a API
+# resource "aws_apigatewayv2_route" "default_route" {
+#   api_id    = aws_apigatewayv2_api.http_api.id
+#   route_key = "ANY /{proxy+}"
 
-  target = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
+#   target = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+# }
 
-# Permissão para o API Gateway invocar a Lambda
-resource "aws_lambda_permission" "apigateway_permission" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api_lambda.function_name
-  principal     = "apigateway.amazonaws.com"
+# # Permissão para o API Gateway invocar a Lambda
+# resource "aws_lambda_permission" "apigateway_permission" {
+#   statement_id  = "AllowAPIGatewayInvoke"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.java_api_lambda.function_name
+#   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*"
-}
+#   source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*"
+# }
 
-# Output da URL da API
-output "api_url" {
-  value = aws_apigatewayv2_api.http_api.api_endpoint
-}
+# # Output da URL da API
+# output "api_url" {
+#   value = aws_apigatewayv2_api.http_api.api_endpoint
+# }
 
