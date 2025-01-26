@@ -21,6 +21,102 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Generate application.xml from secrets
+        run: |
+          mkdir -p src/main/resources
+          cat > src/main/resources/application.xml <<EOF
+          spring:
+            main:
+              allow-bean-definition-overriding: true
+              banner-mode: console
+            application:
+              name: hackathon-video
+            sql:
+              init:
+                continue-on-error: true
+                platform: mysql
+                schema-locations: classpath:schema.sql
+                data-locations: classpath:data.sql
+                mode: always
+            data:
+              jpa:
+                repositories:
+                  enabled: true
+            jpa:
+              show-sql: true
+              hibernate:
+                ddl-auto: none
+              properties:
+                hibernate:
+                  default_schema: public
+            servlet:
+              multipart:
+                max-file-size: 100MB # Tamanho máximo de um único arquivo
+                max-request-size: 100MB # Tamanho máximo de toda a requisição
+            arquivo:
+              local:
+                root: c:/temp
+
+
+            datasource:
+              url: ${{ secrets.DB_HACKATON_APP_URL }}
+              username: ${{ secrets.DB_HACKATON_APP_USERNAME }}
+              password: ${{ secrets.DB_HACKATON_APP_PASSWORD }}
+              driverClassName: ${DATABASE_DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}
+              schema: classpath:schema.sql
+
+            jwt:
+              secret: FeKw08M4keuw8e9gnsQZQgwg4yDOlMZfvIwzEkSOsiU=
+              issuer: grupo-57
+              audience: fiap
+              expiration-time: 36000
+              allowed-clock-skew: 30
+
+          cloud:
+            aws:
+              region:
+                static: us-east-1
+              credentials:
+                access-key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                secret-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              s3:
+                region: us-east-1
+                bucket-upload-name: fiap-grupo57-hackathon
+                bucket-download-name: fiap-grupo57-hackathon-zip
+              sqs:
+                region: us-east-1
+                queue-name: hackathon-video-processado
+
+          info:
+            group-id: "br.com.fiap.soat07.hackathon"
+            artifact-id: "video-api"
+            version: "1.0.0"
+            java.version: "17.x"
+
+          server:
+            port: 8080
+            max-http-request-header-size: 24KB
+            servlet:
+              context-path: /video
+            tomcat:
+              max-http-response-header-size: 24KB
+
+
+          logging:
+            group:
+              web: org.springframework.web, org.springframework.core.codec, org.springframework.http,
+              spring: org.springframework.core.env
+              servlet: org.springframework.boot.web, org.apache.coyote, org.apache.catalina, org.apache.tomcat
+              data:  org.springframework.jdbc.core,  org.springframework.orm.jpa, org.hibernate
+              app: br.com.fiap.soat07.hackathon
+            level:
+              web: ${LOGGING_LEVEL_WEB:INFO}
+              spring: ${LOGGING_LEVEL_SPRING:INFO}
+              servlet: ${LOGGING_LEVEL_SERVLET:INFO}
+              data: ${LOGGING_LEVEL_DATA:INFO}
+              app: ${LOGGING_LEVEL_APP:INFO}
+          EOF
+
       # Build do JAR
       - name: Build Lambda Function
         run: mvn clean package
