@@ -51,7 +51,7 @@
                 </executions>
             </plugin>
         </plugins>
-
+        <finalName>lambda-function</finalName>
     </build>
 
 
