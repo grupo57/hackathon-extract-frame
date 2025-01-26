@@ -3,7 +3,7 @@ variable "lambda_function_name" {
 }
 
 variable "s3_bucket_name" {
-  default = "hackathon-extract-frame-bucket"
+  default = "hackathon-app-api-deploy-bucket"
 }
 
 variable "layer_ffmpeg_s3_key" {
