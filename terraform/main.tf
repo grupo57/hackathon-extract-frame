@@ -11,7 +11,7 @@ resource "aws_lambda_function" "java_api_lambda" {
   function_name = var.lambda_function_name
   runtime       = "java17"
   role          = aws_iam_role.lambda_exec.arn
-  handler       = "com.example.Handler::handleRequest"
+  handler       = "br.com.fiap.soat07.hackathon.aws.lambda.VideoFrameExtractorLambda::handleRequest"
 
   s3_bucket        = var.s3_bucket_name
   s3_key           = "lambda-function.jar"
