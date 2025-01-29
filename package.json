@@ -1,0 +1,19 @@
+{
+  "name": "hackathon-extract-frame",
+  "version": "1.0.0",
+  "description": "Microserviço responsável por realizar a extração de frames de videos enviados ao S3",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "archiver": "^7.0.1",
+    "aws-sdk": "^2.1692.0",
+    "dotenv": "^16.4.7",
+    "fluent-ffmpeg": "^2.1.3"
+  }
+}
