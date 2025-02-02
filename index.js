@@ -91,6 +91,8 @@ async function sendMessageToSQS(queueUrl, videoId) {
     }),
   };
 
+  console.log("Enviando mensagem ao SQS:", params);
+
   return sqs.sendMessage(params).promise();
 }
 
