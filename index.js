@@ -81,6 +81,19 @@ async function uploadZipToS3(bucketName, zipKey, zipPath) {
   return s3.upload(params).promise();
 }
 
+// Função para enviar mensagem ao SQS
+async function sendMessageToSQS(queueUrl, videoId) {
+  const params = {
+    QueueUrl: queueUrl,
+    MessageBody: JSON.stringify({
+      status: "completed",
+      videoId: videoId,
+    }),
+  };
+
+  return sqs.sendMessage(params).promise();
+}
+
 // Handler do AWS Lambda
 exports.handler = async (event) => {
   console.log("Evento recebido:", JSON.stringify(event, null, 2));
@@ -88,7 +101,7 @@ exports.handler = async (event) => {
   for (const record of event.Records) {
     try {
       const messageBody = JSON.parse(record.body);
-      const { videoKey, interval, bucketNameDownload, bucketNameUpload } =
+      const { videoKey, interval, bucketNameDownload, bucketNameUpload, videoId } =
         messageBody;
 
       if (!videoKey || !interval || !bucketNameDownload || !bucketNameUpload) {
@@ -104,6 +117,7 @@ exports.handler = async (event) => {
       const outputDir = `/tmp/thumbnails`;
       const zipPath = `/tmp/thumbnails.zip`;
       const zipKey = `output/thumbnails-${Date.now()}.zip`;
+      const queueUrl = "https://sqs.us-east-1.amazonaws.com/026131848615/video-completed-queue";
 
       // Baixar o vídeo do S3
       await downloadVideoFromS3(bucketNameDownload, videoKey, tempVideoPath);
@@ -121,6 +135,9 @@ exports.handler = async (event) => {
 
       // Fazer upload do ZIP para o S3
       await uploadZipToS3(bucketNameUpload, zipKey, zipPath);
+
+      // Enviar mensagem para o SQS
+      await sendMessageToSQS(queueUrl, videoId);
 
       console.log(
         `Processo concluído! ZIP salvo em: ${bucketNameUpload}/${zipKey}`
