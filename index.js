@@ -82,14 +82,25 @@ async function uploadZipToS3(bucketName, zipKey, zipPath) {
 }
 
 // Função para enviar mensagem ao SQS
-async function sendMessageToSQS(queueUrl, videoId) {
+async function sendMessageToSQS(queueUrl, videoId, zipKey, bucketNameUpload) {
   const params = {
     QueueUrl: queueUrl,
+    job: "App\\Jobs\\ProcessSqsMessage",
+    data: JSON.stringify({
+      status: "completed",
+      videoId: videoId,
+      zipKey: zipKey,
+      bucketName: bucketNameUpload,
+    }),
     MessageBody: JSON.stringify({
       status: "completed",
       videoId: videoId,
+      zipKey: zipKey,
+      bucketName: bucketNameUpload,
     }),
   };
+
+  console.log("Enviando mensagem ao SQS:", params);
 
   return sqs.sendMessage(params).promise();
 }
@@ -137,7 +148,7 @@ exports.handler = async (event) => {
       await uploadZipToS3(bucketNameUpload, zipKey, zipPath);
 
       // Enviar mensagem para o SQS
-      await sendMessageToSQS(queueUrl, videoId);
+      await sendMessageToSQS(queueUrl, videoId, zipKey, bucketNameUpload);
 
       console.log(
         `Processo concluído! ZIP salvo em: ${bucketNameUpload}/${zipKey}`
